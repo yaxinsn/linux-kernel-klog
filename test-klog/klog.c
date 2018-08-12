@@ -60,8 +60,11 @@ int __seq_vprintf(struct seq_file *m, int lenx, const char *f, va_list args)
 {
 	int len;
     int __min = m->size - m->count < lenx?m->size - m->count:lenx;
+    printk("%s:%d __min %d \n",__func__,__LINE__,__min);
+    
 	if (m->count < m->size) {
 		len = vsnprintf(m->buf + m->count,__min , f, args);
+		  printk("%s:%d len %d \n",__func__,__LINE__,len);
 		if (m->count + len < m->size) {
 			m->count += len;
 			return 0;
@@ -91,13 +94,15 @@ static int  klog_read (struct seq_file *m, void *v)
     
     if(t->around == 1)
     {
-        start = t->log_head+1;
-        if(start >= t->log_buf)
+        start = t->log_head;
+       #if 0 
+        if(start >= t->log_buf+t->logbuf_size)
             start = t->log_buf;
+    #endif
         end = t->log_head;
         
         printk("klog_read the around is 1 \n");
-        seq_nprintf(m,(t->logbuf_size - (start - t->log_buf)),"%s",start);
+        seq_nprintf(m,(t->logbuf_size - (t->log_head - t->log_buf)),"%s",start);
         seq_nprintf(m,t->log_head - t->log_buf ,"%s",t->log_buf);
         
     }
@@ -106,11 +111,12 @@ static int  klog_read (struct seq_file *m, void *v)
         start = t->log_buf;
         end = t->log_head;
         
-        seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
+        //seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
+        seq_printf(m,"%s",start);
     }
     
-   // printk("ctx->log_buf %p  head %p  start %p \n",t->log_buf, t->log_head,start);
-   // printk(" %s \n", start);
+    printk("ctx->log_buf %p  head %p  start %p \n",t->log_buf, t->log_head,start);
+    printk(" %s \n", t->log_buf);
 
     
     return 0;
@@ -226,6 +232,7 @@ void __log_store(struct klog_ctx* ctx,char* textbuf,int text_len)
     u64 remain = (ctx->logbuf_size - (ctx->log_head - ctx->log_buf));
     printk("size %d, (ctx->log_head - ctx->log_buf) %d \n",
     ctx->logbuf_size, (ctx->log_head - ctx->log_buf));
+    printk("%s: text_len %d \n",__func__,text_len);
     if(text_len > remain)
     {
         memcpy(ctx->log_head,textbuf,remain);
@@ -252,7 +259,7 @@ asmlinkage int _vprintk_emit(struct klog_ctx* ctx,
 	char *text = textbuf;
 	size_t text_len;
 	
-	unsigned long flags;
+	//unsigned long flags;
 	//local_irq_save(flags);
 	this_cpu = smp_processor_id();
 	spin_lock(&ctx->lock);
