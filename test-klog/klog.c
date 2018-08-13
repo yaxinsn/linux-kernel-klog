@@ -2,8 +2,8 @@
  *
  * 本程序在/proc里生成一个日志文件，为一些内核模块提供另一种日志打印机制。
  * 类似于printk与dmesg ，但是为了不影响系统日志，所以在另一个文件里输出一些特别的日志。
- *
- *
+ *  klog的ctx相应于一个子类，klog模块自己应该知道目前有多少个ctx并使用proc输出。方便用户了解都有谁使用了klog. -- 2018/8/13
+ * author: yaxinsn.
  *
  * */
 
@@ -75,11 +75,9 @@ static int  klog_read (struct seq_file *m, void *v)
         end = t->log_head-1;
         
         KDEBUG("klog_read the around is 1 \n");
-        //seq_nprintf(m,(t->logbuf_size - (t->log_head-1 - t->log_buf)),"%s",start);
         seq_printf(m,"%s",start);
         p = *(t->log_head);
         *t->log_head = 0;
-       // seq_nprintf(m,t->log_head - t->log_buf ,"%s",t->log_buf);
         seq_printf(m,"%s",t->log_buf);
         *t->log_head = p;
     }
@@ -88,7 +86,6 @@ static int  klog_read (struct seq_file *m, void *v)
         start = t->log_buf;
         end = t->log_head;
         
-        //seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
         seq_printf(m,"%s",start);
     }
     
@@ -109,7 +106,8 @@ static ssize_t klog_write(struct file *file, const char __user *buffer, size_t c
 
     struct klog_ctx*  t =(struct klog_ctx* )((struct seq_file*)file->private_data)->private;
 											
-
+	//TODO;
+	// user write any ,and clear the klog_buf;
 	//char buf[20];
    	//int a;
    	//copy_from_user(&buf,buffer,20);
