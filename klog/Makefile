@@ -19,8 +19,8 @@ VPATH = .:../misc
 
 total-OBJECTS = $(main-OBJECTS)  
 			
-INC=/usr/src/linux-headers-2.6.32-5-common-linx/include
-EXTRA_CFLAGS += -I$(INC) -I$(SELF_PATH) -I/usr/src/linux-headers-2.6.32-5-common-linx/include
+## EXT_HEADER=-I/usr/src/linux-headers-2.6.32-5-common-linx/include
+EXTRA_CFLAGS += -I$(INC) -I$(SELF_PATH) $(EXT_HEADER)
 
 TARGET = Klog
 
