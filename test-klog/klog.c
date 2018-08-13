@@ -54,36 +54,9 @@
 
 #include "klog.h"
 
+#define KDEBUG printk
 
 
-int __seq_vprintf(struct seq_file *m, int lenx, const char *f, va_list args)
-{
-	int len;
-    int __min = m->size - m->count < lenx?m->size - m->count:lenx;
-    printk("%s:%d __min %d \n",__func__,__LINE__,__min);
-    
-	if (m->count < m->size) {
-		len = vsnprintf(m->buf + m->count,__min , f, args);
-		  printk("%s:%d len %d \n",__func__,__LINE__,len);
-		if (m->count + len < m->size) {
-			m->count += len;
-			return 0;
-		}
-	}
-	m->count = m->size;
-	return -1;
-}
-int seq_nprintf(struct seq_file *m, int len, const char *f, ...)
-{
-	int ret;
-	va_list args;
-	
-	va_start(args, f);
-	ret = __seq_vprintf(m,len ,f, args);
-	va_end(args);
-
-	return ret;
-}
 
 static int  klog_read (struct seq_file *m, void *v)
 {
@@ -101,13 +74,13 @@ static int  klog_read (struct seq_file *m, void *v)
     #endif
         end = t->log_head-1;
         
-        printk("klog_read the around is 1 \n");
+        KDEBUG("klog_read the around is 1 \n");
         //seq_nprintf(m,(t->logbuf_size - (t->log_head-1 - t->log_buf)),"%s",start);
         seq_printf(m,"%s",start);
         p = *(t->log_head);
         *t->log_head = 0;
        // seq_nprintf(m,t->log_head - t->log_buf ,"%s",t->log_buf);
-        seq_nprintf(m,"%s",t->log_buf);
+        seq_printf(m,"%s",t->log_buf);
         *t->log_head = p;
     }
     else
@@ -115,12 +88,12 @@ static int  klog_read (struct seq_file *m, void *v)
         start = t->log_buf;
         end = t->log_head;
         
-        seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
-        //seq_printf(m,"%s",start);
+        //seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
+        seq_printf(m,"%s",start);
     }
     
-    printk("ctx->log_buf %p  head %p  start %p \n",t->log_buf, t->log_head,start);
-    printk("%s", t->log_buf);
+    KDEBUG("ctx->log_buf %p  head %p  start %p \n",t->log_buf, t->log_head,start);
+    KDEBUG("%s", t->log_buf);
 
     
     return 0;
@@ -157,22 +130,23 @@ static const struct file_operations klog_fops = {
 		.write          = klog_write,
 };
 
-
+#define KLOG_BULK_SIZE 1024
 struct klog_ctx*  create_klog(char* file_name, struct proc_dir_entry* proc_dir,size_t size)
 {
     struct proc_dir_entry *proc_entry  = NULL;
+    char* log_buf;
 	struct klog_ctx* ctx = kmalloc(sizeof(struct klog_ctx),GFP_KERNEL|__GFP_ZERO);
 	if(!ctx)
 		return NULL;
 
 	
-	char* log_buf = kmalloc(20*size,GFP_KERNEL|__GFP_ZERO);	
+	log_buf = kmalloc(KLOG_BULK_SIZE*size,GFP_KERNEL|__GFP_ZERO);	
 	if(!log_buf){
 		printk("alloc pages is failed! \n");
 		goto err1;
 	}
     ctx->log_buf = log_buf;
-    ctx->logbuf_size = 20*size - 1;
+    ctx->logbuf_size = KLOG_BULK_SIZE*size - 1;
     
 	proc_entry = proc_create_data(file_name, 0, proc_dir, &klog_fops, ctx);
 	if(proc_entry == NULL)
@@ -218,7 +192,7 @@ EXPORT_SYMBOL(create_klog);
 
 int destroy_klog(struct klog_ctx* ctx )
 {
-    printk("----ctx->file_name %s -----\n",ctx->file_name);
+    KDEBUG("----ctx->file_name %s -----\n",ctx->file_name);
     remove_proc_entry(ctx->file_name,ctx->parent_entry);
     
     __KFREE(ctx->file_name);
@@ -234,9 +208,8 @@ void __log_store(struct klog_ctx* ctx,char* textbuf,int text_len)
 {
     //check around;
     u64 remain = (ctx->logbuf_size - (ctx->log_head - ctx->log_buf));
-    printk("size %d, (ctx->log_head - ctx->log_buf) %d \n",
-    ctx->logbuf_size, (ctx->log_head - ctx->log_buf));
-    printk("%s: text_len %d \n",__func__,text_len);
+    KDEBUG("size %d, (ctx->log_head - ctx->log_buf) %ld \n", ctx->logbuf_size,(ctx->log_head - ctx->log_buf));
+    KDEBUG("%s: text_len %d \n",__func__,text_len);
     if(text_len > remain)
     {
         memcpy(ctx->log_head,textbuf,remain);
@@ -258,7 +231,6 @@ asmlinkage int _vprintk_emit(struct klog_ctx* ctx,
 			    const char *fmt, va_list args)
 {
     int this_cpu;
-	int printed_len = 0;
 	static char textbuf[1024];
 	char *text = textbuf;
 	size_t text_len;
@@ -270,6 +242,7 @@ asmlinkage int _vprintk_emit(struct klog_ctx* ctx,
 	text_len = vscnprintf(text, sizeof(textbuf), fmt, args);
 	__log_store( ctx,textbuf,text_len);
 	spin_unlock(&ctx->lock);
+	return text_len;
 }
 int klog_printk(struct klog_ctx* ctx,const char *fmt, ...)
 {
@@ -278,6 +251,7 @@ int klog_printk(struct klog_ctx* ctx,const char *fmt, ...)
 	va_start(args, fmt);
 	r = _vprintk_emit(ctx,fmt, args);
 	va_end(args);
+	return r;
 }
 
 EXPORT_SYMBOL(klog_printk);
