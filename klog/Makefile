@@ -38,7 +38,7 @@ KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 #KERNELDIR ?= /lib/modules/3.7.10-1.32-desktop/build
 PWD       := $(shell pwd)
 
-EXTRA_CFLAGS += -I$(INC) -I$(SELF_PATH) -I/usr/src/linux-headers-2.6.32-5-common-linx/include
+EXTRA_CFLAGS += -I$(INC) -I$(SELF_PATH) #-I/usr/src/linux-headers-2.6.32-5-common-linx/include
 modules:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) INC=$(PRIVATE_INC) SELF_PATH=$(__SELF) modules
 

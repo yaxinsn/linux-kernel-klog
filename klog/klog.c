@@ -79,7 +79,7 @@ static int  klog_read (struct seq_file *m, void *v)
         p = *(t->log_head);
         *t->log_head = 0;
        // seq_nprintf(m,t->log_head - t->log_buf ,"%s",t->log_buf);
-        seq_nprintf(m,"%s",t->log_buf);
+        seq_printf(m,"%s",t->log_buf);
         *t->log_head = p;
     }
     else
@@ -87,8 +87,8 @@ static int  klog_read (struct seq_file *m, void *v)
         start = t->log_buf;
         end = t->log_head;
         
-        seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
-        //seq_printf(m,"%s",start);
+        //seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
+        seq_printf(m,"%s",start);
     }
     
     printk("ctx->log_buf %p  head %p  start %p \n",t->log_buf, t->log_head,start);
