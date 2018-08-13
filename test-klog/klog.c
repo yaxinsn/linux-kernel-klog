@@ -77,7 +77,7 @@ int seq_nprintf(struct seq_file *m, int len, const char *f, ...)
 {
 	int ret;
 	va_list args;
-
+	
 	va_start(args, f);
 	ret = __seq_vprintf(m,len ,f, args);
 	va_end(args);
@@ -90,7 +90,7 @@ static int  klog_read (struct seq_file *m, void *v)
     struct klog_ctx*  t =(struct klog_ctx* )((struct seq_file*)m->private);
     char* start;
     char* end;   
-
+	char p;
     
     if(t->around == 1)
     {
@@ -99,24 +99,28 @@ static int  klog_read (struct seq_file *m, void *v)
         if(start >= t->log_buf+t->logbuf_size)
             start = t->log_buf;
     #endif
-        end = t->log_head;
+        end = t->log_head-1;
         
         printk("klog_read the around is 1 \n");
-        seq_nprintf(m,(t->logbuf_size - (t->log_head - t->log_buf)),"%s",start);
-        seq_nprintf(m,t->log_head - t->log_buf ,"%s",t->log_buf);
-        
+        //seq_nprintf(m,(t->logbuf_size - (t->log_head-1 - t->log_buf)),"%s",start);
+        seq_printf(m,"%s",start);
+        p = *(t->log_head);
+        *t->log_head = 0;
+       // seq_nprintf(m,t->log_head - t->log_buf ,"%s",t->log_buf);
+        seq_nprintf(m,"%s",t->log_buf);
+        *t->log_head = p;
     }
     else
     {
         start = t->log_buf;
         end = t->log_head;
         
-        //seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
-        seq_printf(m,"%s",start);
+        seq_nprintf(m,t->log_head - t->log_buf,"%s",start);
+        //seq_printf(m,"%s",start);
     }
     
     printk("ctx->log_buf %p  head %p  start %p \n",t->log_buf, t->log_head,start);
-    printk(" %s \n", t->log_buf);
+    printk("%s", t->log_buf);
 
     
     return 0;
@@ -168,7 +172,7 @@ struct klog_ctx*  create_klog(char* file_name, struct proc_dir_entry* proc_dir,s
 		goto err1;
 	}
     ctx->log_buf = log_buf;
-    ctx->logbuf_size = 20*size;
+    ctx->logbuf_size = 20*size - 1;
     
 	proc_entry = proc_create_data(file_name, 0, proc_dir, &klog_fops, ctx);
 	if(proc_entry == NULL)
