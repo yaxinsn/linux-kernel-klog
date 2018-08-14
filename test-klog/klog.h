@@ -22,6 +22,6 @@ int klog_printk(struct klog_ctx* ctx,const char *fmt, ...);
 
 int destroy_klog(struct klog_ctx* ctx );
 struct klog_ctx*  create_klog(char* file_name, struct proc_dir_entry* proc_dir,size_t size);
-
+int klog_printk_time(struct klog_ctx* ctx,const char *fmt, ...);
 
 #endif

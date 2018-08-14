@@ -38,7 +38,7 @@ static int hello_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned i
 		}
 		//klog_printk(sim_klog,"START:\n");
 		
-			 klog_printk(sim_klog,"%s\n",hello[0]);
+			 klog_printk_time(sim_klog,"%s\n",hello[0]);
 		break;
 
 	case HELLO_MONA:
@@ -46,7 +46,7 @@ static int hello_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned i
             
 			return -EFAULT;
 		}
-		klog_printk(sim_klog,"%s\n",hello[1]);
+		klog_printk_time(sim_klog,"%s\n",hello[1]);
 		break;
 
 	default:

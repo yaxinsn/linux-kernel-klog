@@ -52,6 +52,11 @@
 #include <linux/rcupdate.h>
 #include <linux/proc_fs.h>
 
+
+#include <linux/timer.h>
+#include <linux/timex.h>
+#include <linux/rtc.h>
+
 #include "klog.h"
 
 #define KDEBUG printk
@@ -254,6 +259,32 @@ int klog_printk(struct klog_ctx* ctx,const char *fmt, ...)
 
 EXPORT_SYMBOL(klog_printk);
 
+int klog_printk_time(struct klog_ctx* ctx,const char *fmt, ...)
+{
+	
+    int r;
+	struct rtc_time tm;
+	struct timex tmx;
+	char  time[128];
+	
+	do_gettimeofday(&(tmx.time));
+	rtc_time_to_tm(tmx.time.tv_sec, &tm);
+	
+	snprintf(time, sizeof(time) - 1, "%d-%02d-%02d %02d:%02d:%02d", 
+		tm.tm_year+1900, tm.tm_mon+1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);	
+
+	r = klog_printk(ctx,"%s|",time);
+	
+	va_list args;
+	va_start(args, fmt);
+	r = _vprintk_emit(ctx,fmt,args);
+	va_end(args);
+	return r;
+}
+
+EXPORT_SYMBOL(klog_printk_time);
+
+		
 /*  init deinit: */
 struct klog_ctx* g_ctx = NULL; 
 
