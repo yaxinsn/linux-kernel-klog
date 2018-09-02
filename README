@@ -1,3 +1,8 @@
 
 ##
 klog init 2018.8.10
+目前有三个项目：
+1，klog 项目 ： proc里输出日志。
+2，misc-cdev:  生成一个杂项字符设备，用于与应用层的通信。
+3，netlink_genl_family ： 使用genl_family，用于应用层的通信，主要是想做到内核到应用层的主动通信方式。
+
