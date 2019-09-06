@@ -1,0 +1,14 @@
+2019-9-6
+在misc-char的基础上，增加了ioctl和mmap的功能。
+其中mmap使用了两种方式，
+	一是remap_pfn_mmap，它使用remap_pfn_range，一次性完成所有的映射。这要求dev里被映射的页面在物理上是连续的，所以要使用kmalloc的申请的页也可以。
+	二是使用nopage或是fault的方式，它在mmap系统调用时，不进行映射，在user程序用哪一页面，则映射哪个映射。使用nopage来进行暂时的映射。
+	
+在main.c中 先是使用alloc_mem的告诉驱动，要申请多少内存。再进行映射，并在映射时进行了写操作。在使用ioctrl_test_mem来使用printf完成检查，并修改相关内容，用户再读取时内存就发生变化了。
+
+----------------------
+下一步：完成一个poll功能。
+在main.c中有两个线程，一是sleep(x) ioctl_write_mem(content,offset)，另一个线程完成poll的读操作。
+
+如何在驱动里有的ring，驱动来写，应用程序来读。整个操作使用mmap的方式。完成一个“生产者与消费者”模式时，使用poll，如何完美地完成ring的指针的移动。可以向libpcap学习。
+
