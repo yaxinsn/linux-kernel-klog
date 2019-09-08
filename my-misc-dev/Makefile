@@ -16,7 +16,7 @@ EXTRA_CFLAGS+=-Wno-unused-variable
 #CFLAGS +=-DMMAP_FILE=./mmap-test.txt
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD       := $(shell pwd)
-my-dev-objs := misc-mmap-dev.o kmmap.o
+my-dev-objs := misc-mmap-dev.o kmmap.o my-ioctl.o
 obj-m := my-dev.o
 
 default:
@@ -26,7 +26,7 @@ default:
 
 
 clean:
-	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions modules.order  Module.symvers main 
+	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions modules.order Module.markers   Module.symvers main 
 
 depend .depend dep:
 	$(CC) $(CFLAGS) -M *.c > .depend
@@ -38,4 +38,4 @@ endif
 
 
 main:main.c
-	gcc -o  main -g main.c
+	gcc -lpthread  -o  main -g main.c
